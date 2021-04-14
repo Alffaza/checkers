@@ -30,11 +30,20 @@ class playingBoard{
             }
         }
         void show(){
+            for(int i=0;i<cWidth/2;i++)cout<<" ";
+            for(int i=0;i<width;i++){
+                cout<<i+1;
+                for(int j=0;j<cWidth-1;j++)cout<<" ";
+            }
+            cout<<endl;
+            for(int i=0;i<width*cWidth;i++)cout<<"-";
+            cout<<"+";
             for(int i=0;i<totArea;i++){
+                if(i!=0&&!(i%(cWidth*width)))cout<<"|"<<char('A'+i/(cWidth*width)-1);
                 if(!(i%(cWidth*width)))cout<<endl;
                 cout<<*(cords+i);
             }
-            cout<<endl;
+            cout<<"|"<<char('A'+height-1)<<endl;
         }
         void place(int x,int y, char sym){
             *(lookAt(x,y))=sym;
