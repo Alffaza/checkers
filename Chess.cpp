@@ -1,6 +1,12 @@
 #include <iostream>
 using namespace std;
-
+class chessPiece;
+class pawn;
+class horse;
+class knight;
+class rook;
+class queen;
+class king;
 //=========================le board===============================================
 class playingBoard{
     public:
@@ -9,7 +15,7 @@ class playingBoard{
             cords=newCords;
             bool turnWhite=0;
             for(int i=0;i<totArea;i++){
-                if(!(i%cWidth)&& (i%(cHeight*width)))turnWhite=!turnWhite;
+                if(!(i%cWidth)&& (i%(cHeight*width*cWidth)))turnWhite=!turnWhite;
                 *(cords+i)=(turnWhite)?wBox:bBox;
             }
         }
@@ -30,7 +36,7 @@ class playingBoard{
         }
         void setPiece(int x,int y,char type, bool isWhite){
             if(isWhite)type-=32;
-            int id=1+(cWidth)*x+(cWidth*width*cHeight)*y;
+            int id=(cWidth/2)+(cWidth)*x+(cWidth*width*cHeight)*y+(cWidth*width)*(cHeight/2-1);
             *(cords+id)=type;
             *(cords+id+(cWidth*width))='I';
         }
@@ -107,6 +113,6 @@ class king:public chessPiece{
 //=======================main func=========================================
 int main(){
     playingBoard bord(8,8,2,3); //board height, board width, cell height, cell width
-
+    pawn budi(0,0,0,&bord);
     bord.show();
 }
