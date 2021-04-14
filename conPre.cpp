@@ -23,6 +23,7 @@ int main(){
             cout<<endl;
         }
     }
+    
     string a;
     cin>>a;
     printf("\033c");
