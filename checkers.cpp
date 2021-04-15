@@ -133,7 +133,7 @@ class checkersBoard:public playingBoard{
             if(isOccupied(x-1,y-1)&&*lookAt(x-1,y-1)==moveMarker)rem(x-1,y-1);
         }
 
-        void cleanMarkers(){
+        void cleanAllMarkers(){
             for(int i=0;i<height;i++){
                 for(int j=0;j<width;j++)
                     if(isOccupied(j,i)&&(*lookAt(j,i)==moveMarker||*lookAt(j,i)==eatMarker))rem(j,i);
@@ -143,21 +143,47 @@ class checkersBoard:public playingBoard{
         void playerTurn(char t){
             int inpx;
             char inpy;
-            bool f=1;
+            bool f=1,multiChoice;
             int maxEating = checkMandatoryEat(t);
-            cout<<maxEating<<endl;
+
+            checker *maxPiece=NULL;
             if(!maxEating)
                 do{
                     show(f);
                     f=0;
-                    cout<<"which piece do you want to move?[number][uppercase letter]\n";
+                    cout<<"which piece do you want to move "<<t<<"?[number][uppercase letter]\n";
                     cin>>inpx>>inpy;
                     inpx--;
                     inpy-='A';
                 }
                 while(*lookAt(inpx,inpy)==bBox||*lookAt(inpx,inpy)==wBox||!(pieceAt(inpx,inpy)->move(t)));
             else{
-
+                for(int i=0;i<height;i++){
+                    for(int j=0;j<width;j++){
+                        if(pieceAt(j,i) && pieceAt(j,i)->team==t && canEatAt(j,i,t)==maxEating){
+                            if(!maxPiece)maxPiece=pieceAt(j,i);
+                            else{
+                                chainEat(j,i,t);
+                                multiChoice=1;
+                            }
+                        }
+                    }
+                }
+                if(!multiChoice)while(eatChain(maxPiece));
+                else{
+                    chainEat(maxPiece->posX,maxPiece->posY,maxPiece->team);
+                    int inpx;
+                    char inpy;
+                    do{
+                        show(1);
+                        cout<<"multiple forced eats, "<<t<<" choose piece!\n";
+                        cin>>inpx>>inpy;
+                        inpx--;
+                        inpy-='A';
+                    } while(canEatAt(inpx,inpy,t)==maxEating);
+                    maxPiece=pieceAt(inpx,inpy);
+                    while(eatChain(maxPiece));
+                }   
             }
         }
 
@@ -167,6 +193,7 @@ class checkersBoard:public playingBoard{
                 for(int j=0;j<width;j++){
                     if(pieceAt(j,i) && pieceAt(j,i)->team==t){
                         ret=max(ret,canEatAt(j,i,t));
+                        if(canEatAt(j,i,t))cout<<j<<" "<<i<<endl;
                     }
                 }
             }
@@ -176,6 +203,7 @@ class checkersBoard:public playingBoard{
         bool eatChain(checker *piece){
             int x=piece->posX,y=piece->posY;
             char t=piece->team;
+            cleanAllMarkers();
             chainEat(x,y,t);
             switch((*lookAt(x+2,y+2)==moveMarker)+(*lookAt(x+2,y-2)==moveMarker)\
             +(*lookAt(x-2,y+2)==moveMarker)+(*lookAt(x-2,y-2)==moveMarker)==1){
@@ -192,7 +220,7 @@ class checkersBoard:public playingBoard{
                 break;
 
                 default:
-                    cout<<"Forced eat! choose where to land!\n";
+                    cout<<"Forced eat! "<<t<<" choose where to land!\n";
                     int inpx;
                     char inpy;
                     cin>>inpx>>inpy;
@@ -211,21 +239,15 @@ class checkersBoard:public playingBoard{
             if(canEatAt(x,y,t)){
                 int moveY=((t=='b')? 1:-1);
                 int numOfEats=0;
-                if(!canEatAt(x+2,y+2*moveY,t)&&!canEatAt(x-2,y+2*moveY,t)){
+                if(!canEatAt(x+2,y+2*moveY,t)||!canEatAt(x-2,y+2*moveY,t)){
                     if(pieceAt(x+1,y+moveY)&&pieceAt(x+1,y+moveY)->team!=t)place(x+2,y+2*moveY,moveMarker);
                     if(pieceAt(x-1,y+moveY)&&pieceAt(x-1,y+moveY)->team!=t)place(x-2,y+2*moveY,moveMarker);
                 }
-                else if(canEatAt(x+2,y+2*moveY,t)==canEatAt(x-2,y+2*moveY,t)){
-                    place(x+2,y+2*moveY,moveMarker);
-                    place(x-2,y+2*moveY,moveMarker);
-                    chainEat(x+2,y+2*moveY,t);
-                    chainEat(x-2,y+2*moveY,t);
-                }
-                else if(isOccupied(x+1,y+moveY)&&canEatAt(x+2,y+2*moveY,t)>canEatAt(x-2,y+2*moveY,t)){
+                else if(isOccupied(x+1,y+moveY)&&(!isOccupied(x-1,y+moveY)||canEatAt(x+2,y+2*moveY,t)>canEatAt(x-2,y+2*moveY,t))){
                     place(x+2,y+2*moveY,moveMarker);
                     chainEat(x+2,y+2*moveY,t);
                 }
-                else if(isOccupied(x-1,y+moveY)&&canEatAt(x+2,y+2*moveY,t)<canEatAt(x-2,y+2*moveY,t)){
+                else if(isOccupied(x-1,y+moveY)&&(!isOccupied(x+1,y+moveY)||canEatAt(x+2,y+2*moveY,t)<canEatAt(x-2,y+2*moveY,t))){
                     place(x-2,y+2*moveY,moveMarker);
                     chainEat(x-2,y+2*moveY,t);
                 }
@@ -236,10 +258,10 @@ class checkersBoard:public playingBoard{
             int moveY=((t=='b')? 1:-1);
             int futY= y+moveY;
             int numOfEats=0;
-            if(pieceAt(x+1,futY)&& pieceAt(x+1,futY)->team!=x &&!isOccupied(x+2,futY+moveY)){
+            if(pieceAt(x+1,futY)&& pieceAt(x+1,futY)->team!=t &&!isOccupied(x+2,futY+moveY)){
                 numOfEats= max(numOfEats,1+canEatAt(x+2,futY+moveY,t));  
             }
-            if(pieceAt(x-1,futY)&& pieceAt(x-1,futY)->team!=x &&!isOccupied(x-2,futY+moveY)){
+            if(pieceAt(x-1,futY)&& pieceAt(x-1,futY)->team!=t &&!isOccupied(x-2,futY+moveY)){
                 numOfEats= max(numOfEats,1+canEatAt(x-2,futY+moveY,t));
             }
             return numOfEats;
@@ -331,6 +353,10 @@ int checker::canEat(char t){
 }
 
 int checker::forcedEat(int x,int y){
+    onBoard->show(1);
+    cout<<"mandatory eat, press enter\n";
+    getchar();
+    getchar();
     int difX=(x-posX)/2;
     int difY=(y-posY)/2;
     onBoard->remPiece(posX+difX,posY+difY);
@@ -340,26 +366,26 @@ int checker::forcedEat(int x,int y){
 //======================= main func =========================================
 int main(){
     char p1='w',p2='b';
+    char currPlayer=p1,changePlayer=p1^p2;
     //board height, board width, cell height, cell width
     checkersBoard bord(8,8,1,3,&bord);
 
-    // for(int i=0;i<bord.height;i+=2){
-    //     for(int j=0;j<3;j++){
-    //         bord.makeApiece(p2,i+(j%2),j);
-    //     }
-    // }
+    for(int i=0;i<bord.height;i+=2){
+        for(int j=0;j<3;j++){
+            bord.makeApiece(p2,i+(j%2),j);
+        }
+    }
 
-    // for(int i=0;i<bord.height;i+=2){
-    //     for(int j=0;j<3;j++){
-    //         bord.makeApiece(p1,i+!(j%2),bord.height-1-j);
-    //     }
-    // }
-    bord.makeApiece(p2,2,2);
-    bord.makeApiece(p2,4,4);
-    bord.makeApiece(p1,6,6);
-    bord.makeApiece(p1,3,5);
-    bord.playerTurn(p1);
-    bord.show(0);
+    for(int i=0;i<bord.height;i+=2){
+        for(int j=0;j<3;j++){
+            bord.makeApiece(p1,i+!(j%2),bord.height-1-j);
+        }
+    }
+    while(1){
+        bord.playerTurn(currPlayer);
+        currPlayer=currPlayer^changePlayer;
+    }
+    bord.show(1);
     // cout<<endl;
     // bord.show(0);
 }
