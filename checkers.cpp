@@ -28,8 +28,8 @@ class playingBoard{
                 *(cords+i)=(turnWhite)?wBox:bBox;
             }
         }
-        void show(){
-            cout<<"\033c";
+        void show(int clrScr){
+            if(clrScr)cout<<"\033c";
             for(int i=0;i<cWidth/2;i++)cout<<" ";
             for(int i=0;i<width;i++){
                 cout<<i+1;
@@ -71,6 +71,11 @@ class checkersBoard:public playingBoard{
             checkerCords=newCheckers;
             init();
         }
+        void makeApiece(char t,int x,int y){
+            checker* newPiece=(checker*)malloc(sizeof(checker));
+            newPiece->ad=newPiece;
+            newPiece->make(t,x,y,selfAdress);
+        }
         void setPiece(int x,int y,checker *piece){
             if(!isOccupied(x,y)){
                 place(x,y,piece->team);
@@ -84,7 +89,8 @@ class checkersBoard:public playingBoard{
                 *(checkerCords+x+y*width)=NULL;
             }
         }
-        checkersBoard(int h,int w,int ch,int cw){
+        checkersBoard(int h,int w,int ch,int cw,checkersBoard *ad){
+            selfAdress=ad;
             height=h;
             width=w;
             cHeight=ch;
@@ -111,8 +117,10 @@ class checkersBoard:public playingBoard{
         void playerTurn(char t){
             int inpx;
             char inpy;
+            bool f=1;
             do{
-                show();
+                show(f);
+                f=0;
                 cout<<"which piece do you want to move?[number][uppercase letter]\n";
                 cin>>inpx>>inpy;
                 inpx--;
@@ -121,6 +129,7 @@ class checkersBoard:public playingBoard{
         }
     private:
         checker **checkerCords;
+        checkersBoard *selfAdress;
 };
 //==================== checker method ============================
 checker::checker(char t,int x,int y, checkersBoard *board){
@@ -154,12 +163,13 @@ int checker::move(char t){
         numOfChoices++;
     }
     if(numOfChoices){
-        onBoard->show();
+        onBoard->show(0);
         cout<<"choose where to move[number][uppercase letter]\n";
         cin>>inpx>>inpy;
         inpx--;
         inpy-='A';
-        if(inpx<0||inpx>=onBoard->width||inpy<0||inpy>=onBoard->height||*(onBoard->lookAt(inpx,inpy))!='O'){
+        if((inpx<0||inpx>=onBoard->width||inpy<0||inpy>=onBoard->height)||*(onBoard->lookAt(inpx,inpy))!='O'){
+            onBoard->cleanMoveMarkers(posX,posY);
             cout<<"cant move there\n";
             return 0;
         }
@@ -180,12 +190,13 @@ void checker::moving(int x,int y){
     posY=y;
 }
 
-//=======================main func=========================================
+//======================= main func =========================================
 int main(){
-    checkersBoard bord(8,8,1,3); //board height, board width, cell height, cell width
-    checker* newone=(checker*)malloc(sizeof(checker));
-    newone->ad=newone;
-    newone->make('b',0,0,&bord);
+    checkersBoard bord(8,8,1,3,&bord); //board height, board width, cell height, cell width
+    cout<<"tes\n";
+    bord.makeApiece('b',0,0);
+    bord.makeApiece('b',2,0);
     bord.playerTurn('b');
-    bord.show();
+    bord.playerTurn('b');
+    bord.show(1);
 }
