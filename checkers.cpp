@@ -1,7 +1,5 @@
 #include <iostream>
 using namespace std;
-#define right 1;
-#define left 0;
 class playingBoard;
 class checkersBoard;
 //===================== pieces for checkers hehe====================================
@@ -10,6 +8,7 @@ class checker{
         checker(char t,int x,int y, checkersBoard *board);
         void make(char t,int x,int y, checkersBoard *board);
         int move(char T);
+        void moving(int x,int y);
         char team;
         checker *ad;
     private:
@@ -30,6 +29,7 @@ class playingBoard{
             }
         }
         void show(){
+            cout<<"\033c";
             for(int i=0;i<cWidth/2;i++)cout<<" ";
             for(int i=0;i<width;i++){
                 cout<<i+1;
@@ -67,20 +67,21 @@ class playingBoard{
 class checkersBoard:public playingBoard{
     public:
         void checkerInit(){
-            checker *newCheckers=(checker*)malloc(height*width*sizeof(checker));
+            checker **newCheckers=(checker**)malloc(height*width*sizeof(checker));
             checkerCords=newCheckers;
             init();
         }
         void setPiece(int x,int y,checker *piece){
             if(!isOccupied(x,y)){
                 place(x,y,piece->team);
-                int id=y*height+x;
-                *(checkerCords+id)=*piece;
+                int id=y*width+x;
+                *(checkerCords+id)=piece;
             }
         }
         void remPiece(int x,int y){
-            if(isOccupied(x,y)){
+            if(x>=0 && x<width && y>= 0 && y<height && isOccupied(x,y)){
                 rem(x,y);
+                *(checkerCords+x+y*width)=NULL;
             }
         }
         checkersBoard(int h,int w,int ch,int cw){
@@ -99,7 +100,7 @@ class checkersBoard:public playingBoard{
         }
         checker *pieceAt(int x, int y){
             int id=y*height+x;
-            return (checkerCords+id);
+            return *(checkerCords+id);
         }
         void cleanMoveMarkers(int x,int y){
             if(isOccupied(x+1,y+1)&&*lookAt(x+1,y+1)=='O')rem(x+1,y+1);
@@ -107,8 +108,19 @@ class checkersBoard:public playingBoard{
             if(isOccupied(x-1,y+1)&&*lookAt(x-1,y+1)=='O')rem(x-1,y+1);
             if(isOccupied(x-1,y-1)&&*lookAt(x-1,y-1)=='O')rem(x-1,y-1);
         }
+        void playerTurn(char t){
+            int inpx;
+            char inpy;
+            do{
+                show();
+                cout<<"which piece do you want to move?[number][uppercase letter]\n";
+                cin>>inpx>>inpy;
+                inpx--;
+                inpy-='A';
+            }while(*lookAt(inpx,inpy)==bBox||*lookAt(inpx,inpy)==wBox||!(pieceAt(inpx,inpy)->move(t)));
+        }
     private:
-        checker *checkerCords;
+        checker **checkerCords;
 };
 //==================== checker method ============================
 checker::checker(char t,int x,int y, checkersBoard *board){
@@ -129,7 +141,7 @@ int checker::move(char t){
     int inpx;
     char inpy;
     if(team!=t){
-        cout<<"it is not "<<team<<"'s turn";
+        cout<<"it is not "<<team<<"'s turn\n";
     }
     int futY= posY + ((team=='b')? 1:-1);
     int numOfChoices=0;
@@ -156,12 +168,16 @@ int checker::move(char t){
         cout<<"no moves for that piece\n";
         return 0;
     }
-    onBoard->rem(inpx,inpy);
-    onBoard->setPiece(inpx,inpy,ad);
+    moving(inpx,inpy);
+    return 1;
+}
+void checker::moving(int x,int y){
+    onBoard->rem(x,y);
+    onBoard->setPiece(x,y,ad);
     onBoard->remPiece(posX,posY);
     onBoard->cleanMoveMarkers(posX,posY);
-    posX=inpx;
-    posY=inpy;
+    posX=x;
+    posY=y;
 }
 
 //=======================main func=========================================
@@ -170,6 +186,6 @@ int main(){
     checker* newone=(checker*)malloc(sizeof(checker));
     newone->ad=newone;
     newone->make('b',0,0,&bord);
-    newone->move('b');
-    newone->move('b');
+    bord.playerTurn('b');
+    bord.show();
 }
