@@ -10,7 +10,7 @@ class checker{
         int move(char T);
         void moving(int x,int y);
         int canEat(char t);
-        int eat();
+        int forcedEat(int x,int y);
         char team;
         checker *ad;
         int posX,posY;
@@ -30,6 +30,7 @@ class playingBoard{
                 *(cords+i)=(turnWhite)?wBox:bBox;
             }
         }
+
         void show(int clrScr){
             if(clrScr)cout<<"\033c";
             for(int i=0;i<cWidth/2;i++)cout<<" ";
@@ -41,27 +42,35 @@ class playingBoard{
             for(int i=0;i<width*cWidth;i++)cout<<"-";
             cout<<"+";
             for(int i=0;i<totArea;i++){
-                if(i!=0&&!(i%(cWidth*width)))cout<<"|"<<char('A'+i/(cWidth*width)-1);
+                if(i!=0&&!(i%(cWidth*width)))cout<<"|";
+                if(i!=0&&!(i%(cWidth*width*cHeight)))cout<<char('A'+i/(cWidth*width*cHeight)-1);
                 if(!(i%(cWidth*width)))cout<<endl;
                 cout<<*(cords+i);
             }
             cout<<"|"<<char('A'+height-1)<<endl;
         }
+
         void place(int x,int y, char sym){
             *(lookAt(x,y))=sym;
         }
+
         void rem(int x,int y){
             *(lookAt(x,y))=((x+y)%2)?wBox:bBox;
         }
+
         bool isOccupied(int x,int y){
             if(x<0||x>=width||y<0||y>=height)return 1;
             return (*(lookAt(x,y))!=bBox&&*(lookAt(x,y))!=wBox);
         }
+
         char *lookAt(int x,int y){
+            if(x<0||x>=width||y<0||y>=height)return " ";
             int id=(cWidth/2)+(cWidth)*x+(cWidth*width*cHeight)*y+(cWidth*width)*(cHeight/2);
             return (cords+id);
         }
+
         int height,width,cHeight,cWidth,totArea;
+
     protected:
         char *cords;
         char wBox='#',bBox=' ';
@@ -73,11 +82,13 @@ class checkersBoard:public playingBoard{
             checkerCords=newCheckers;
             init();
         }
+
         void makeApiece(char t,int x,int y){
             checker* newPiece=(checker*)malloc(sizeof(checker));
             newPiece->ad=newPiece;
             newPiece->make(t,x,y,selfAdress);
         }
+
         void setPiece(int x,int y,checker *piece){
             if(!isOccupied(x,y)){
                 place(x,y,piece->team);
@@ -85,12 +96,14 @@ class checkersBoard:public playingBoard{
                 *(checkerCords+id)=piece;
             }
         }
+
         void remPiece(int x,int y){
             if(x>=0 && x<width && y>= 0 && y<height && isOccupied(x,y)){
                 rem(x,y);
                 *(checkerCords+x+y*width)=NULL;
             }
         }
+
         checkersBoard(int h,int w,int ch,int cw,checkersBoard *ad){
             selfAdress=ad;
             height=h;
@@ -100,71 +113,140 @@ class checkersBoard:public playingBoard{
             totArea=h*w*ch*cw;
             checkerInit();
         }
+
         void doMove(int x,int y){
             if(!isOccupied(x,y)) cout<<"no piece found there!\n";
             else{
                 pieceAt(x,y)->move(pieceAt(x,y)->team);
             }
         }
+
         checker *pieceAt(int x, int y){
             int id=y*height+x;
             return *(checkerCords+id);
         }
+
         void cleanMoveMarkers(int x,int y){
-            if(isOccupied(x+1,y+1)&&*lookAt(x+1,y+1)=='O')rem(x+1,y+1);
-            if(isOccupied(x+1,y-1)&&*lookAt(x+1,y-1)=='O')rem(x+1,y-1);
-            if(isOccupied(x-1,y+1)&&*lookAt(x-1,y+1)=='O')rem(x-1,y+1);
-            if(isOccupied(x-1,y-1)&&*lookAt(x-1,y-1)=='O')rem(x-1,y-1);
+            if(isOccupied(x+1,y+1)&&*lookAt(x+1,y+1)==moveMarker)rem(x+1,y+1);
+            if(isOccupied(x+1,y-1)&&*lookAt(x+1,y-1)==moveMarker)rem(x+1,y-1);
+            if(isOccupied(x-1,y+1)&&*lookAt(x-1,y+1)==moveMarker)rem(x-1,y+1);
+            if(isOccupied(x-1,y-1)&&*lookAt(x-1,y-1)==moveMarker)rem(x-1,y-1);
         }
+
+        void cleanMarkers(){
+            for(int i=0;i<height;i++){
+                for(int j=0;j<width;j++)
+                    if(isOccupied(j,i)&&(*lookAt(j,i)==moveMarker||*lookAt(j,i)==eatMarker))rem(j,i);
+            }
+        }
+
         void playerTurn(char t){
             int inpx;
             char inpy;
             bool f=1;
-            do{
-                show(f);
-                f=0;
-                cout<<"which piece do you want to move?[number][uppercase letter]\n";
-                cin>>inpx>>inpy;
-                inpx--;
-                inpy-='A';
-            }while(*lookAt(inpx,inpy)==bBox||*lookAt(inpx,inpy)==wBox||!(pieceAt(inpx,inpy)->move(t)));
+            int maxEating = checkMandatoryEat(t);
+            cout<<maxEating<<endl;
+            if(!maxEating)
+                do{
+                    show(f);
+                    f=0;
+                    cout<<"which piece do you want to move?[number][uppercase letter]\n";
+                    cin>>inpx>>inpy;
+                    inpx--;
+                    inpy-='A';
+                }
+                while(*lookAt(inpx,inpy)==bBox||*lookAt(inpx,inpy)==wBox||!(pieceAt(inpx,inpy)->move(t)));
+            else{
+
+            }
         }
+
+        int checkMandatoryEat(char t){
+            int ret=0;
+            for(int i=0;i<height;i++){
+                for(int j=0;j<width;j++){
+                    if(pieceAt(j,i) && pieceAt(j,i)->team==t){
+                        ret=max(ret,canEatAt(j,i,t));
+                    }
+                }
+            }
+            return ret;
+        }
+
+        bool eatChain(checker *piece){
+            int x=piece->posX,y=piece->posY;
+            char t=piece->team;
+            chainEat(x,y,t);
+            switch((*lookAt(x+2,y+2)==moveMarker)+(*lookAt(x+2,y-2)==moveMarker)\
+            +(*lookAt(x-2,y+2)==moveMarker)+(*lookAt(x-2,y-2)==moveMarker)==1){
+                case 1:
+                    if((*lookAt(x+2,y+2)==moveMarker))piece->forcedEat(x+2,y+2);
+                    else if((*lookAt(x+2,y-2)==moveMarker))piece->forcedEat(x+2,y-2);
+                    else if((*lookAt(x-2,y+2)==moveMarker))piece->forcedEat(x-2,y+2);
+                    else if((*lookAt(x-2,y-2)==moveMarker))piece->forcedEat(x-2,y-2);
+                    return 1;
+                break;
+
+                case 0:
+                    return 0;
+                break;
+
+                default:
+                    cout<<"Forced eat! choose where to land!\n";
+                    int inpx;
+                    char inpy;
+                    cin>>inpx>>inpy;
+                    inpx--;
+                    inpy-='A';
+                    if(*lookAt(inpx,inpy)!=moveMarker){
+                        return 0;
+                    }
+                    piece->forcedEat(inpx,inpy);
+                    return 1;
+                break;    
+            }
+        }
+
         void chainEat(int x,int y,char t){
             if(canEatAt(x,y,t)){
                 int moveY=((t=='b')? 1:-1);
                 int numOfEats=0;
                 if(!canEatAt(x+2,y+2*moveY,t)&&!canEatAt(x-2,y+2*moveY,t)){
-                    if(pieceAt(x+1,y+moveY)&&pieceAt(x+1,y+moveY)->team!=x)place(x+2,y+2*moveY,'O');
-                    if(pieceAt(x-1,y+moveY)&&pieceAt(x-1,y+moveY)->team!=x)place(x-2,y+2*moveY,'O');
+                    if(pieceAt(x+1,y+moveY)&&pieceAt(x+1,y+moveY)->team!=t)place(x+2,y+2*moveY,moveMarker);
+                    if(pieceAt(x-1,y+moveY)&&pieceAt(x-1,y+moveY)->team!=t)place(x-2,y+2*moveY,moveMarker);
                 }
                 else if(canEatAt(x+2,y+2*moveY,t)==canEatAt(x-2,y+2*moveY,t)){
-                    place(x+2,y+2*moveY,'O');
-                    place(x-2,y+2*moveY,'O');
+                    place(x+2,y+2*moveY,moveMarker);
+                    place(x-2,y+2*moveY,moveMarker);
                     chainEat(x+2,y+2*moveY,t);
                     chainEat(x-2,y+2*moveY,t);
                 }
-                else if(canEatAt(x+2,y+2*moveY,t)>canEatAt(x-2,y+2*moveY,t)){
-                    place(x+2,y+2*moveY,'O');
+                else if(isOccupied(x+1,y+moveY)&&canEatAt(x+2,y+2*moveY,t)>canEatAt(x-2,y+2*moveY,t)){
+                    place(x+2,y+2*moveY,moveMarker);
                     chainEat(x+2,y+2*moveY,t);
                 }
-                else if(canEatAt(x+2,y+2*moveY,t)<canEatAt(x-2,y+2*moveY,t)){
-                    place(x-2,y+2*moveY,'O');
-                    chainEat(x-2,y+2*moveY,'O');
+                else if(isOccupied(x-1,y+moveY)&&canEatAt(x+2,y+2*moveY,t)<canEatAt(x-2,y+2*moveY,t)){
+                    place(x-2,y+2*moveY,moveMarker);
+                    chainEat(x-2,y+2*moveY,t);
                 }
             }
         }
+
         int canEatAt(int x,int y, char t){
             int moveY=((t=='b')? 1:-1);
             int futY= y+moveY;
             int numOfEats=0;
             if(pieceAt(x+1,futY)&& pieceAt(x+1,futY)->team!=x &&!isOccupied(x+2,futY+moveY)){
-                numOfEats= 1+canEatAt(x+2,futY+moveY,t);  
+                numOfEats= max(numOfEats,1+canEatAt(x+2,futY+moveY,t));  
             }
             if(pieceAt(x-1,futY)&& pieceAt(x-1,futY)->team!=x &&!isOccupied(x-2,futY+moveY)){
                 numOfEats= max(numOfEats,1+canEatAt(x-2,futY+moveY,t));
             }
             return numOfEats;
         }
+
+        char moveMarker='O',eatMarker='0';
+
     private:
         checker **checkerCords;
         checkersBoard *selfAdress;
@@ -177,6 +259,7 @@ checker::checker(char t,int x,int y, checkersBoard *board){
     onBoard=board;
     onBoard->setPiece(posX,posY,ad);
 }
+
 void checker::make(char t,int x,int y, checkersBoard *board){
     posX=x;
     posY=y;
@@ -184,6 +267,7 @@ void checker::make(char t,int x,int y, checkersBoard *board){
     onBoard=board;
     onBoard->setPiece(posX,posY,ad);
 }
+
 int checker::move(char t){
     int inpx;
     char inpy;
@@ -194,15 +278,15 @@ int checker::move(char t){
     int futY= posY + ((team=='b')? 1:-1);
     int numOfChoices=0;
     if(!onBoard->isOccupied(posX-1,futY)){
-        onBoard->place(posX-1,futY,'O');
+        onBoard->place(posX-1,futY,onBoard->moveMarker);
         numOfChoices++;
     }
     if(!onBoard->isOccupied(posX+1,futY)){
-        onBoard->place(posX+1,futY,'O');
+        onBoard->place(posX+1,futY,onBoard->moveMarker);
         numOfChoices++;
     }
     if(numOfChoices){
-        onBoard->show(0);
+        onBoard->show(1);
         cout<<"choose where to move[number][uppercase letter]\n";
         cin>>inpx>>inpy;
         inpx--;
@@ -220,6 +304,7 @@ int checker::move(char t){
     moving(inpx,inpy);
     return 1;
 }
+
 void checker::moving(int x,int y){
     onBoard->rem(x,y);
     onBoard->setPiece(x,y,ad);
@@ -228,6 +313,7 @@ void checker::moving(int x,int y){
     posX=x;
     posY=y;
 }
+
 int checker::canEat(char t){
     if(t!=team)return 0;
     int ret=0;
@@ -240,22 +326,40 @@ int checker::canEat(char t){
         numOfChoices++;  
     }
     if(onBoard->pieceAt(posX-1,futY)&& onBoard->pieceAt(posX-1,futY)->team!=team &&!onBoard->isOccupied(posX-2,futY+moveY)){
-        onBoard->place(posX-2,futY+moveY,'O');  
+        onBoard->place(posX-2,futY+moveY,onBoard->moveMarker);  
     }
 }
-int checker::eat(){
 
+int checker::forcedEat(int x,int y){
+    int difX=(x-posX)/2;
+    int difY=(y-posY)/2;
+    onBoard->remPiece(posX+difX,posY+difY);
+    moving(x,y);
 }
 
 //======================= main func =========================================
 int main(){
-    checkersBoard bord(8,8,1,3,&bord); //board height, board width, cell height, cell width
-    cout<<"tes\n";
-    bord.makeApiece('b',0,0);
-    bord.makeApiece('w',1,1);
-    bord.makeApiece('w',3,3);
-    bord.makeApiece('w',5,5);
-    bord.chainEat(0,0,'b');
-    cout<<endl;
+    char p1='w',p2='b';
+    //board height, board width, cell height, cell width
+    checkersBoard bord(8,8,1,3,&bord);
+
+    // for(int i=0;i<bord.height;i+=2){
+    //     for(int j=0;j<3;j++){
+    //         bord.makeApiece(p2,i+(j%2),j);
+    //     }
+    // }
+
+    // for(int i=0;i<bord.height;i+=2){
+    //     for(int j=0;j<3;j++){
+    //         bord.makeApiece(p1,i+!(j%2),bord.height-1-j);
+    //     }
+    // }
+    bord.makeApiece(p2,2,2);
+    bord.makeApiece(p2,4,4);
+    bord.makeApiece(p1,6,6);
+    bord.makeApiece(p1,3,5);
+    bord.playerTurn(p1);
     bord.show(0);
+    // cout<<endl;
+    // bord.show(0);
 }
