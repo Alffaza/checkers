@@ -5,4 +5,10 @@ Ngerjain lewat repository github dan diberi dokumentasi nya (penjelasan rinci cl
 
 Projek tadinya chess tapi ga sanggup bikin dalam 2 hari jadinya ganti ke checkers ;w;
 
+Penjelasan rinci Class
 
+# Playing Board
+
+# Checkers Board
+
+# Checker
