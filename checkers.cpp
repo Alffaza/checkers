@@ -60,7 +60,7 @@ class playingBoard{
 
         bool isOccupied(int x,int y){
             if(x<0||x>=width||y<0||y>=height)return 1;
-            return (*(lookAt(x,y))!=bBox&&*(lookAt(x,y))!=wBox);
+            return (*(lookAt(x,y))!=bBox&&*(lookAt(x,y))!=wBox&&*(lookAt(x,y))!=mark);
         }
 
         char *lookAt(int x,int y){
@@ -73,7 +73,7 @@ class playingBoard{
 
     protected:
         char *cords;
-        char wBox='#',bBox=' ';
+        char wBox='#',bBox=' ',mark='O';
 };
 class checkersBoard:public playingBoard{
     public:
@@ -136,19 +136,20 @@ class checkersBoard:public playingBoard{
         void cleanAllMarkers(){
             for(int i=0;i<height;i++){
                 for(int j=0;j<width;j++)
-                    if(isOccupied(j,i)&&(*lookAt(j,i)==moveMarker||*lookAt(j,i)==eatMarker))rem(j,i);
+                    if((*lookAt(j,i)==moveMarker||*lookAt(j,i)==eatMarker))rem(j,i);
             }
         }
 
         void playerTurn(char t){
             int inpx;
             char inpy;
-            bool f=1,multiChoice;
+            bool f=1,multiChoice=0;
             int maxEating = checkMandatoryEat(t);
 
             checker *maxPiece=NULL;
             if(!maxEating)
                 do{
+                    cleanAllMarkers();
                     show(f);
                     f=0;
                     cout<<"which piece do you want to move "<<t<<"?[number][uppercase letter]\n";
@@ -180,7 +181,7 @@ class checkersBoard:public playingBoard{
                         cin>>inpx>>inpy;
                         inpx--;
                         inpy-='A';
-                    } while(canEatAt(inpx,inpy,t)==maxEating);
+                    }while(pieceAt(inpx,inpy)!=NULL||canEatAt(inpx,inpy,t)!=maxEating);
                     maxPiece=pieceAt(inpx,inpy);
                     while(eatChain(maxPiece));
                 }   
@@ -313,8 +314,7 @@ int checker::move(char t){
         cin>>inpx>>inpy;
         inpx--;
         inpy-='A';
-        if((inpx<0||inpx>=onBoard->width||inpy<0||inpy>=onBoard->height)||*(onBoard->lookAt(inpx,inpy))!='O'){
-            onBoard->cleanMoveMarkers(posX,posY);
+        if((inpx<0||inpx>=onBoard->width||inpy<0||inpy>=onBoard->height)||*(onBoard->lookAt(inpx,inpy))!=onBoard->moveMarker){
             cout<<"cant move there\n";
             return 0;
         }
@@ -336,21 +336,21 @@ void checker::moving(int x,int y){
     posY=y;
 }
 
-int checker::canEat(char t){
-    if(t!=team)return 0;
-    int ret=0;
-    int moveY=((team=='b')? 1:-1);
-    int futY= posY+moveY;
-    int tempX=posX;
-    int tempY=posY;
-    int numOfChoices=0;
-    if(onBoard->pieceAt(posX+1,futY)&& onBoard->pieceAt(posX+1,futY)->team!=team &&!onBoard->isOccupied(posX+2,futY+moveY)){
-        numOfChoices++;  
-    }
-    if(onBoard->pieceAt(posX-1,futY)&& onBoard->pieceAt(posX-1,futY)->team!=team &&!onBoard->isOccupied(posX-2,futY+moveY)){
-        onBoard->place(posX-2,futY+moveY,onBoard->moveMarker);  
-    }
-}
+// int checker::canEat(char t){
+//     if(t!=team)return 0;
+//     int ret=0;
+//     int moveY=((team=='b')? 1:-1);
+//     int futY= posY+moveY;
+//     int tempX=posX;
+//     int tempY=posY;
+//     int numOfChoices=0;
+//     if(onBoard->pieceAt(posX+1,futY)&& onBoard->pieceAt(posX+1,futY)->team!=team &&!onBoard->isOccupied(posX+2,futY+moveY)){
+//         numOfChoices++;  
+//     }
+//     if(onBoard->pieceAt(posX-1,futY)&& onBoard->pieceAt(posX-1,futY)->team!=team &&!onBoard->isOccupied(posX-2,futY+moveY)){
+//         onBoard->place(posX-2,futY+moveY,onBoard->moveMarker);  
+//     }
+// }
 
 int checker::forcedEat(int x,int y){
     onBoard->show(1);
@@ -361,6 +361,7 @@ int checker::forcedEat(int x,int y){
     int difY=(y-posY)/2;
     onBoard->remPiece(posX+difX,posY+difY);
     moving(x,y);
+    return 1;
 }
 
 //======================= main func =========================================
