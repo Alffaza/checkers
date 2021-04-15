@@ -2,19 +2,21 @@
 using namespace std;
 class playingBoard;
 class checkersBoard;
-//===================== pieces for checkers hehe====================================
+//===================== pieces for checkers =========================================
 class checker{
     public:
         checker(char t,int x,int y, checkersBoard *board);
         void make(char t,int x,int y, checkersBoard *board);
         int move(char T);
         void moving(int x,int y);
+        int canEat(char t);
+        int eat();
         char team;
         checker *ad;
+        int posX,posY;
     private:
         checkersBoard *onBoard;
         bool isQueen=0;
-        int posX,posY;
 };
 //=========================le board ===============================================
 class playingBoard{
@@ -127,6 +129,42 @@ class checkersBoard:public playingBoard{
                 inpy-='A';
             }while(*lookAt(inpx,inpy)==bBox||*lookAt(inpx,inpy)==wBox||!(pieceAt(inpx,inpy)->move(t)));
         }
+        void chainEat(int x,int y,char t){
+            if(canEatAt(x,y,t)){
+                int moveY=((t=='b')? 1:-1);
+                int numOfEats=0;
+                if(!canEatAt(x+2,y+2*moveY,t)&&!canEatAt(x-2,y+2*moveY,t)){
+                    if(pieceAt(x+1,y+moveY)&&pieceAt(x+1,y+moveY)->team!=x)place(x+2,y+2*moveY,'O');
+                    if(pieceAt(x-1,y+moveY)&&pieceAt(x-1,y+moveY)->team!=x)place(x-2,y+2*moveY,'O');
+                }
+                else if(canEatAt(x+2,y+2*moveY,t)==canEatAt(x-2,y+2*moveY,t)){
+                    place(x+2,y+2*moveY,'O');
+                    place(x-2,y+2*moveY,'O');
+                    chainEat(x+2,y+2*moveY,t);
+                    chainEat(x-2,y+2*moveY,t);
+                }
+                else if(canEatAt(x+2,y+2*moveY,t)>canEatAt(x-2,y+2*moveY,t)){
+                    place(x+2,y+2*moveY,'O');
+                    chainEat(x+2,y+2*moveY,t);
+                }
+                else if(canEatAt(x+2,y+2*moveY,t)<canEatAt(x-2,y+2*moveY,t)){
+                    place(x-2,y+2*moveY,'O');
+                    chainEat(x-2,y+2*moveY,'O');
+                }
+            }
+        }
+        int canEatAt(int x,int y, char t){
+            int moveY=((t=='b')? 1:-1);
+            int futY= y+moveY;
+            int numOfEats=0;
+            if(pieceAt(x+1,futY)&& pieceAt(x+1,futY)->team!=x &&!isOccupied(x+2,futY+moveY)){
+                numOfEats= 1+canEatAt(x+2,futY+moveY,t);  
+            }
+            if(pieceAt(x-1,futY)&& pieceAt(x-1,futY)->team!=x &&!isOccupied(x-2,futY+moveY)){
+                numOfEats= max(numOfEats,1+canEatAt(x-2,futY+moveY,t));
+            }
+            return numOfEats;
+        }
     private:
         checker **checkerCords;
         checkersBoard *selfAdress;
@@ -151,6 +189,7 @@ int checker::move(char t){
     char inpy;
     if(team!=t){
         cout<<"it is not "<<team<<"'s turn\n";
+        return 0;
     }
     int futY= posY + ((team=='b')? 1:-1);
     int numOfChoices=0;
@@ -189,14 +228,34 @@ void checker::moving(int x,int y){
     posX=x;
     posY=y;
 }
+int checker::canEat(char t){
+    if(t!=team)return 0;
+    int ret=0;
+    int moveY=((team=='b')? 1:-1);
+    int futY= posY+moveY;
+    int tempX=posX;
+    int tempY=posY;
+    int numOfChoices=0;
+    if(onBoard->pieceAt(posX+1,futY)&& onBoard->pieceAt(posX+1,futY)->team!=team &&!onBoard->isOccupied(posX+2,futY+moveY)){
+        numOfChoices++;  
+    }
+    if(onBoard->pieceAt(posX-1,futY)&& onBoard->pieceAt(posX-1,futY)->team!=team &&!onBoard->isOccupied(posX-2,futY+moveY)){
+        onBoard->place(posX-2,futY+moveY,'O');  
+    }
+}
+int checker::eat(){
+
+}
 
 //======================= main func =========================================
 int main(){
     checkersBoard bord(8,8,1,3,&bord); //board height, board width, cell height, cell width
     cout<<"tes\n";
     bord.makeApiece('b',0,0);
-    bord.makeApiece('b',2,0);
-    bord.playerTurn('b');
-    bord.playerTurn('b');
-    bord.show(1);
+    bord.makeApiece('w',1,1);
+    bord.makeApiece('w',3,3);
+    bord.makeApiece('w',5,5);
+    bord.chainEat(0,0,'b');
+    cout<<endl;
+    bord.show(0);
 }
