@@ -11,7 +11,9 @@ class checker{
         void moving(int x,int y);
         int canEat(char t);
         int forcedEat(int x,int y);
-        char team;
+        void promote();
+        void checkPromote();
+        char team,sym;
         checker *ad;
         int posX,posY;
         bool isQueen;
@@ -92,7 +94,7 @@ class checkersBoard:public playingBoard{
 
         void setPiece(int x,int y,checker *piece){
             if(!isOccupied(x,y)){
-                place(x,y,piece->team);
+                place(x,y,piece->sym);
                 int id=y*width+x;
                 *(checkerCords+id)=piece;
             }
@@ -182,7 +184,7 @@ class checkersBoard:public playingBoard{
                         cin>>inpx>>inpy;
                         inpx--;
                         inpy-='A';
-                    }while(pieceAt(inpx,inpy)==NULL||!canEatAt(inpx,inpy,t,pieceAt(inpx,inpy)->isQueen)!=maxEating);
+                    }while(pieceAt(inpx,inpy)==NULL||canEatAt(inpx,inpy,t,pieceAt(inpx,inpy)->isQueen)!=maxEating);
                     maxPiece=pieceAt(inpx,inpy);
                     while(eatChain(maxPiece));
                 }   
@@ -356,7 +358,7 @@ checker::checker(char t,int x,int y, checkersBoard *board){
 void checker::make(char t,int x,int y, checkersBoard *board){
     posX=x;
     posY=y;
-    team=t;
+    team=sym=t;
     isQueen=0;
     onBoard=board;
     onBoard->setPiece(posX,posY,ad);
@@ -415,6 +417,7 @@ void checker::moving(int x,int y){
     onBoard->cleanAllMarkers();
     posX=x;
     posY=y;
+    checkPromote();
 }
 
 int checker::forcedEat(int x,int y){
@@ -428,6 +431,23 @@ int checker::forcedEat(int x,int y){
     moving(x,y);
     return 1;
 }
+void checker::checkPromote(){
+    if(team=='b'){
+        if(posY==onBoard->height-1){
+            promote();
+        }
+    }
+    else{
+        if(posY==0){
+            promote();
+        }
+    }
+}
+void checker::promote(){
+    isQueen=1;
+    sym+='A'-'a';
+    onBoard->place(posX,posY,sym);
+}
 
 //======================= main func =========================================
 int main(){
@@ -435,25 +455,22 @@ int main(){
     char currPlayer=p1,changePlayer=p1^p2;
     //board height, board width, cell height, cell width
     checkersBoard bord(8,8,1,3,&bord);
-    bord.makeApiece(p2,5,5);
-    bord.makeApiece(p2,5,3);
-    bord.makeApiece(p1,4,2)->isQueen=1;
-    bord.playerTurn(p1);
-    // for(int i=0;i<bord.height;i+=2){
-    //     for(int j=0;j<3;j++){
-    //         bord.makeApiece(p2,i+(j%2),j);
-    //     }
-    // }
 
-    // for(int i=0;i<bord.height;i+=2){
-    //     for(int j=0;j<3;j++){
-    //         bord.makeApiece(p1,i+!(j%2),bord.height-1-j);
-    //     }
-    // }
-    // while(1){
-    //     bord.playerTurn(currPlayer);
-    //     currPlayer=currPlayer^changePlayer;
-    // }
+    for(int i=0;i<bord.height;i+=2){
+        for(int j=0;j<3;j++){
+            bord.makeApiece(p2,i+(j%2),j);
+        }
+    }
+
+    for(int i=0;i<bord.height;i+=2){
+        for(int j=0;j<3;j++){
+            bord.makeApiece(p1,i+!(j%2),bord.height-1-j);
+        }
+    }
+    while(1){
+        bord.playerTurn(currPlayer);
+        currPlayer=currPlayer^changePlayer;
+    }
 
 
     bord.show(0);
