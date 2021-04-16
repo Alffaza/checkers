@@ -6,6 +6,8 @@ Nama: Ridzki Raihan Alfaza
 NRP: 5025201178
 Departemen Teknik Informatika
 
+# Checkers
+  Permainan checkers yang dimulai langsung dengan warna putih yang dilambangkan dengan huruf w, dan diikuti oleh hitam yang dilambangkan b.
 # Penjelasan rinci Class
 
 ## playingBoard
@@ -25,28 +27,41 @@ Menyimpan char yang merepresentasikan kotak putih dan kotak hitam dan simbol lai
 ## checkersBoard
 Anak dari playingBoard, berfungsi sebagai juri di permainan checkers.
   ### checkersBoard()
-  Constructor checkersBoard, mengatur ukuran papan main dan menjalankan `checkersInit()` dan `init()`
+  Constructor checkersBoard, mengatur ukuran papan main dan menjalankan `checkersInit()` dan `init()`.
   ### checkersInit
-  Membuat array yang isinya semua alamat checker
+  Membuat array yang isinya semua alamat checker.
   ### makeApiece
-  Membuat checker tim `t` pada (x,y)
+  Membuat checker tim `t` pada (x,y).
   ### setPiece
-  Memindahkan checker ke (x,y)
+  Memindahkan checker ke (x,y).
   ### remPiece
-  Menghilangkan checker pada (x,y)
+  Menghilangkan checker pada (x,y).
   ### pieceAt
-  Mengembalikan checker pada (x,y)
+  Mengembalikan checker pada (x,y).
   ### cleanAllMarkers
-  Menghapus semua marker jalan pada papan main
+  Menghapus semua marker jalan pada papan main.
   ### canEatAt
-  Mengembalikan jumlah makan maksimum yang dilakukan pada checker pada (x,y) menggunakan rekursi
+  Mengembalikan jumlah makan maksimum yang dilakukan pada checker pada (x,y) menggunakan rekursi.
   ### chainEat
   Memberi marker untuk rantai makan terpanjang yang bisa diambil.
   ### eatChain
   Melakukan forced eat untuk checker yang dapat memakan paling banyak. Jika yang dapat memakan lebih dari 1, meminta input untuk memilih checker yang gerak.
+  ### playerTurn
+  - Apabila rantai makan paling panjang bukan 0, memaksa pemain untuk mengambil gerakan yang memberi makan paling banyak.
+  - Apabila rantai makan paling panjang 0, meminta input pemain untuk memilih checker mana yang ingin digerakkan.
+  - Saat bergerak, kotak yang dapat dipilih untuk tujuan gerak dilambangkan dengan marker
   
-  
-## Checker
-  -menyimpan posisi dalam board, lambang, warna
-  -melakukan promosi menjadi ratu jika di ujung
-  
+## checker
+  Melambangkan satu checker di papan, menyimpan posisi checker di papan (`posX`,`posY`) dan alamat checkerBoard yang dia diletakkan.
+  ### make
+  Mengisi posisi dan tim checker dan menggambarkan dia di papan main.
+  ### move
+  Apabila dapat bergerak, meminta input untuk checker bergerak ke mana.
+  ### moving
+  Memindah checker ke (x,y)
+  ### forcedEat
+  Memimdahkan checker ke (x,y) serta menghapus checker yang dilompat.
+  ### checkPromote
+  `Promote` checker jika dia di ujung papan bagian musuh.
+  ### Promote
+  Mengubah checker jadi queen. Mengubah simbil checker menjadi huruf kapital.
