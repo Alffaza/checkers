@@ -7,7 +7,7 @@ class checker{
     public:
         checker(char t,int x,int y, checkersBoard *board);
         void make(char t,int x,int y, checkersBoard *board);
-        int move(char T);
+        int move(char t);
         void moving(int x,int y);
         int canEat(char t);
         int forcedEat(int x,int y);
@@ -17,6 +17,7 @@ class checker{
         checker *ad;
         int posX,posY;
         bool isQueen;
+
     private:
         checkersBoard *onBoard;
 };
@@ -117,23 +118,9 @@ class checkersBoard:public playingBoard{
             checkerInit();
         }
 
-        void doMove(int x,int y){
-            if(!isOccupied(x,y)) cout<<"no piece found there!\n";
-            else{
-                pieceAt(x,y)->move(pieceAt(x,y)->team);
-            }
-        }
-
         checker *pieceAt(int x, int y){
             int id=y*height+x;
             return *(checkerCords+id);
-        }
-
-        void cleanMoveMarkers(int x,int y){
-            if(isOccupied(x+1,y+1)&&*lookAt(x+1,y+1)==moveMarker)rem(x+1,y+1);
-            if(isOccupied(x+1,y-1)&&*lookAt(x+1,y-1)==moveMarker)rem(x+1,y-1);
-            if(isOccupied(x-1,y+1)&&*lookAt(x-1,y+1)==moveMarker)rem(x-1,y+1);
-            if(isOccupied(x-1,y-1)&&*lookAt(x-1,y-1)==moveMarker)rem(x-1,y-1);
         }
 
         void cleanAllMarkers(){
@@ -267,7 +254,6 @@ class checkersBoard:public playingBoard{
                         place(x+2,y+2*moveY,moveMarker);
                     }
                     else rem(x+2,y+2*moveY);
-                    cout<<"Aa\n";
                     place(x-2,y+2*moveY,'X');
                     if(isOccupied(x-1,y+moveY)&&canEatAt(x-2,y+2*moveY,t,queen)==maks-1){
                         place(x-2,y+2*moveY,'X');
@@ -352,12 +338,7 @@ class checkersBoard:public playingBoard{
 };
 //==================== checker method ============================
 checker::checker(char t,int x,int y, checkersBoard *board){
-    posX=x;
-    posY=y;
-    team=sym=t;
-    isQueen=0;
-    onBoard=board;
-    onBoard->setPiece(posX,posY,ad);
+    make(t,x,y,board);
 }
 
 void checker::make(char t,int x,int y, checkersBoard *board){
@@ -437,15 +418,11 @@ int checker::forcedEat(int x,int y){
     return 1;
 }
 void checker::checkPromote(){
-    if(team=='b'){
-        if(posY==onBoard->height-1){
-            promote();
+    if(!isQueen){
+        if(team=='b'){
+            if(posY==onBoard->height-1) promote();
         }
-    }
-    else{
-        if(posY==0){
-            promote();
-        }
+        else if(posY==0)promote();
     }
 }
 void checker::promote(){
