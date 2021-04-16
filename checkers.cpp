@@ -139,7 +139,7 @@ class checkersBoard:public playingBoard{
         void cleanAllMarkers(){
             for(int i=0;i<height;i++){
                 for(int j=0;j<width;j++)
-                    if((*lookAt(j,i)==moveMarker||*lookAt(j,i)==eatMarker))rem(j,i);
+                    if(*lookAt(j,i)==moveMarker)rem(j,i);
             }
         }
 
@@ -153,10 +153,12 @@ class checkersBoard:public playingBoard{
             if(!maxEating)
                 do{
                     cleanAllMarkers();
+                    if(!f)cout<<"wrong input!\n";
                     show(f);
                     f=0;
                     cout<<"which piece do you want to move "<<t<<"?[number][uppercase letter]\n";
                     cin>>inpx>>inpy;
+                    getchar();
                     inpx--;
                     inpy-='A';
                 }
@@ -180,8 +182,9 @@ class checkersBoard:public playingBoard{
                     char inpy;
                     do{
                         show(1);
-                        cout<<"multiple forced eats, "<<t<<" choose piece!\n";
+                        cout<<"multiple forced eats, "<<t<<" choose piece![number][uppercase letter]\n";
                         cin>>inpx>>inpy;
+                        getchar();
                         inpx--;
                         inpy-='A';
                     }while(pieceAt(inpx,inpy)==NULL||canEatAt(inpx,inpy,t,pieceAt(inpx,inpy)->isQueen)!=maxEating);
@@ -226,10 +229,11 @@ class checkersBoard:public playingBoard{
 
                 default:
                     show(1);
-                    cout<<"Forced eat! "<<t<<" choose where to land!\n";
+                    cout<<"Forced eat! "<<t<<" choose where to land![number][uppercase letter]\n";
                     int inpx;
                     char inpy;
                     cin>>inpx>>inpy;
+                    getchar();
                     inpx--;
                     inpy-='A';
                     if(*lookAt(inpx,inpy)!=moveMarker){
@@ -340,7 +344,7 @@ class checkersBoard:public playingBoard{
             return numOfEats;
         }
 
-        char moveMarker='O',eatMarker='0';
+        char moveMarker='O';
 
     private:
         checker **checkerCords;
@@ -350,7 +354,8 @@ class checkersBoard:public playingBoard{
 checker::checker(char t,int x,int y, checkersBoard *board){
     posX=x;
     posY=y;
-    team=t;
+    team=sym=t;
+    isQueen=0;
     onBoard=board;
     onBoard->setPiece(posX,posY,ad);
 }
@@ -395,6 +400,7 @@ int checker::move(char t){
         onBoard->show(1);
         cout<<"choose where to move[number][uppercase letter]\n";
         cin>>inpx>>inpy;
+        getchar();
         inpx--;
         inpy-='A';
         if((inpx<0||inpx>=onBoard->width||inpy<0||inpy>=onBoard->height)||*(onBoard->lookAt(inpx,inpy))!=onBoard->moveMarker){
@@ -423,7 +429,6 @@ void checker::moving(int x,int y){
 int checker::forcedEat(int x,int y){
     onBoard->show(1);
     cout<<"mandatory eat, press enter\n";
-    getchar();
     getchar();
     int difX=(x-posX)/2;
     int difY=(y-posY)/2;
