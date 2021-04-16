@@ -455,23 +455,22 @@ int main(){
     char currPlayer=p1,changePlayer=p1^p2;
     //board height, board width, cell height, cell width
     checkersBoard bord(8,8,1,3,&bord);
-    bord.makeApiece(p1,1,1);
-    bord.playerTurn(p1);
-    // for(int i=0;i<bord.height;i+=2){
-    //     for(int j=0;j<3;j++){
-    //         bord.makeApiece(p2,i+(j%2),j);
-    //     }
-    // }
 
-    // for(int i=0;i<bord.height;i+=2){
-    //     for(int j=0;j<3;j++){
-    //         bord.makeApiece(p1,i+!(j%2),bord.height-1-j);
-    //     }
-    // }
-    // while(1){
-    //     bord.playerTurn(currPlayer);
-    //     currPlayer=currPlayer^changePlayer;
-    // }
+    for(int i=0;i<bord.height;i+=2){
+        for(int j=0;j<3;j++){
+            bord.makeApiece(p2,i+(j%2),j);
+        }
+    }
+
+    for(int i=0;i<bord.height;i+=2){
+        for(int j=0;j<3;j++){
+            bord.makeApiece(p1,i+!(j%2),bord.height-1-j);
+        }
+    }
+    while(1){
+        bord.playerTurn(currPlayer);
+        currPlayer=currPlayer^changePlayer;
+    }
 
 
     bord.show(0);
