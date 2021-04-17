@@ -67,7 +67,7 @@ class playingBoard{
         }
 
         char *lookAt(int x,int y){
-            if(x<0||x>=width||y<0||y>=height)return " ";
+            if(x<0||x>=width||y<0||y>=height)return cords;
             int id=(cWidth/2)+(cWidth)*x+(cWidth*width*cHeight)*y+(cWidth*width)*(cHeight/2);
             return (cords+id);
         }
