@@ -1,2 +1,3 @@
 # CHECKERS
-works for ubuntu i think
+ichiro internship assignment
+works for ubuntu
