@@ -1,3 +1,3 @@
 # CHECKERS
-ichiro internship assignment
+ichiro internship assignment  
 works for ubuntu
